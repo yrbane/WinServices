@@ -86,10 +86,9 @@ function Export-StateSnapshot {
         }
         'task' {
             foreach ($n in $Names) {
-                $path = Split-Path $n -Parent
-                $leaf = Split-Path $n -Leaf
+                $parts = Split-TaskPath -FullPath $n
                 try {
-                    $t = Get-ScheduledTask -TaskPath "$path\" -TaskName $leaf -ErrorAction Stop
+                    $t = Get-ScheduledTask -TaskPath $parts.TaskPath -TaskName $parts.TaskName -ErrorAction Stop
                     [pscustomobject]@{ TaskPath = $t.TaskPath; TaskName = $t.TaskName; State = [string]$t.State }
                 } catch { }
             }
@@ -177,6 +176,140 @@ function Disable-ServiceItem {
         Add-RestoreCommand -Path $RestoreScriptPath -Command "Start-Service -Name '$Name'"
     }
     return [pscustomobject]@{ Success = $true; Reason = 'OK' }
+}
+
+function Split-TaskPath {
+    # Decoupe un chemin de tache planifiee Windows (toujours avec '\' comme separateur)
+    # de maniere portable (Split-Path natif ne gere pas '\' sous Linux).
+    param([Parameter(Mandatory)][string] $FullPath)
+    $lastSep = $FullPath.LastIndexOf('\')
+    if ($lastSep -lt 0) {
+        return [pscustomobject]@{ TaskPath = '\'; TaskName = $FullPath }
+    }
+    $parent = $FullPath.Substring(0, $lastSep)
+    $leaf   = $FullPath.Substring($lastSep + 1)
+    if (-not $parent.EndsWith('\')) { $parent += '\' }
+    return [pscustomobject]@{ TaskPath = $parent; TaskName = $leaf }
+}
+
+function Disable-TaskItem {
+    param(
+        [Parameter(Mandatory)][string] $FullPath,
+        [Parameter(Mandatory)][string] $RestoreScriptPath,
+        [switch] $DryRun
+    )
+    $parts = Split-TaskPath -FullPath $FullPath
+    $taskPath = $parts.TaskPath
+    $leaf     = $parts.TaskName
+
+    try {
+        $task = Get-ScheduledTask -TaskPath $taskPath -TaskName $leaf -ErrorAction Stop
+    } catch {
+        return [pscustomobject]@{ Success = $false; Reason = "Tache introuvable : $FullPath" }
+    }
+
+    if ($DryRun) {
+        Write-Info "[DRYRUN] Desactiverait la tache '$FullPath' (etat initial : $($task.State))"
+        return [pscustomobject]@{ Success = $true; Reason = 'DryRun' }
+    }
+
+    try {
+        Disable-ScheduledTask -TaskPath $taskPath -TaskName $leaf -ErrorAction Stop | Out-Null
+    } catch {
+        return [pscustomobject]@{ Success = $false; Reason = $_.Exception.Message }
+    }
+
+    Add-RestoreCommand -Path $RestoreScriptPath -Command "Enable-ScheduledTask -TaskPath '$taskPath' -TaskName '$leaf'"
+    return [pscustomobject]@{ Success = $true; Reason = 'OK' }
+}
+
+function Disable-FeatureItem {
+    param(
+        [Parameter(Mandatory)][string] $Name,
+        [Parameter(Mandatory)][string] $RestoreScriptPath,
+        [switch] $DryRun
+    )
+    try {
+        $f = Get-WindowsOptionalFeature -Online -FeatureName $Name -ErrorAction Stop
+    } catch {
+        return [pscustomobject]@{ Success = $false; Reason = "Fonctionnalite introuvable : $Name" }
+    }
+
+    if ([string]$f.State -eq 'Disabled') {
+        return [pscustomobject]@{ Success = $true; Reason = 'Deja desactivee' }
+    }
+
+    if ($DryRun) {
+        Write-Info "[DRYRUN] Desactiverait la feature '$Name'"
+        return [pscustomobject]@{ Success = $true; Reason = 'DryRun' }
+    }
+
+    try {
+        Disable-WindowsOptionalFeature -Online -FeatureName $Name -NoRestart -ErrorAction Stop | Out-Null
+    } catch {
+        return [pscustomobject]@{ Success = $false; Reason = $_.Exception.Message }
+    }
+
+    Add-RestoreCommand -Path $RestoreScriptPath -Command "Enable-WindowsOptionalFeature -Online -FeatureName '$Name' -NoRestart"
+    return [pscustomobject]@{ Success = $true; Reason = 'OK' }
+}
+
+function Remove-AppxItem {
+    param(
+        [Parameter(Mandatory)][string] $Name,
+        [Parameter(Mandatory)][string] $RestoreScriptPath,
+        [switch] $DryRun
+    )
+    $pkg = Get-AppxPackage -Name $Name -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $pkg) {
+        return [pscustomobject]@{ Success = $true; Reason = 'Paquet absent' }
+    }
+
+    if ($DryRun) {
+        Write-Info "[DRYRUN] Desinstallerait le paquet AppX '$Name'"
+        return [pscustomobject]@{ Success = $true; Reason = 'DryRun' }
+    }
+
+    try {
+        Remove-AppxPackage -Package $pkg.PackageFullName -ErrorAction Stop
+    } catch {
+        return [pscustomobject]@{ Success = $false; Reason = $_.Exception.Message }
+    }
+
+    Add-RestoreCommand -Path $RestoreScriptPath -Command "# $($pkg.Name) : desinstalle. Paquet original : $($pkg.PackageFullName)"
+    Add-RestoreCommand -Path $RestoreScriptPath -Command "# Pour restaurer : reinstaller via Microsoft Store."
+    return [pscustomobject]@{ Success = $true; Reason = 'OK' }
+}
+
+function Invoke-ItemAction {
+    param(
+        [Parameter(Mandatory)] $Item,
+        [Parameter(Mandatory)][string] $RestoreScriptPath,
+        [switch] $DryRun
+    )
+    switch ($Item.type) {
+        'service' { return Disable-ServiceItem -Name $Item.name -RestoreScriptPath $RestoreScriptPath -DryRun:$DryRun }
+        'task'    { return Disable-TaskItem -FullPath $Item.name -RestoreScriptPath $RestoreScriptPath -DryRun:$DryRun }
+        'feature' { return Disable-FeatureItem -Name $Item.name -RestoreScriptPath $RestoreScriptPath -DryRun:$DryRun }
+        'appx'    { return Remove-AppxItem -Name $Item.name -RestoreScriptPath $RestoreScriptPath -DryRun:$DryRun }
+        default   { throw "Type d'item inconnu : $($Item.type)" }
+    }
+}
+
+function Initialize-RestoreScript {
+    param([Parameter(Mandatory)][string] $BackupDir)
+    $stamp = Split-Path $BackupDir -Leaf
+    $path = Join-Path $BackupDir "Restore-$stamp.ps1"
+    $header = @"
+# Script de restauration - $stamp
+# Genere par Optimize-Windows.ps1
+#Requires -RunAsAdministrator
+
+Write-Host 'Restauration en cours...' -ForegroundColor Cyan
+
+"@
+    Set-Content -LiteralPath $path -Value $header -Encoding UTF8
+    return $path
 }
 
 function Test-IsElevated {
