@@ -1,6 +1,180 @@
 {
   "version": "1.0",
   "minWindowsBuild": 22621,
-  "categories": [],
-  "advanced": []
+  "categories": [
+    {
+      "id": "printing",
+      "question": "Utilises-tu une imprimante (locale ou reseau) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "Spooler", "description": "File d'impression" },
+        { "type": "service", "name": "PrintNotify", "description": "Notifications imprimante" },
+        { "type": "service", "name": "PrintWorkflowUserSvc", "description": "Workflow d'impression" },
+        { "type": "task",    "name": "\\Microsoft\\Windows\\Printing\\EduPrintProv" }
+      ]
+    },
+    {
+      "id": "fax",
+      "question": "Utilises-tu le fax ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "Fax", "description": "Service de fax" }
+      ]
+    },
+    {
+      "id": "bluetooth",
+      "question": "Utilises-tu le Bluetooth ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "bthserv" },
+        { "type": "service", "name": "BluetoothUserService" },
+        { "type": "service", "name": "BTAGService" },
+        { "type": "service", "name": "BthAvctpSvc" }
+      ]
+    },
+    {
+      "id": "xbox",
+      "question": "Utilises-tu Xbox Game Bar / Xbox Live ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "XblAuthManager" },
+        { "type": "service", "name": "XblGameSave" },
+        { "type": "service", "name": "XboxGipSvc" },
+        { "type": "service", "name": "XboxNetApiSvc" },
+        { "type": "appx",    "name": "Microsoft.XboxGamingOverlay" },
+        { "type": "appx",    "name": "Microsoft.GamingApp" },
+        { "type": "appx",    "name": "Microsoft.Xbox.TCUI" },
+        { "type": "appx",    "name": "Microsoft.XboxSpeechToTextOverlay" }
+      ]
+    },
+    {
+      "id": "hyperv",
+      "question": "Utilises-tu Hyper-V / machines virtuelles Windows ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "vmcompute" },
+        { "type": "service", "name": "vmms" },
+        { "type": "service", "name": "HvHost" },
+        { "type": "service", "name": "vmickvpexchange" },
+        { "type": "service", "name": "vmicguestinterface" },
+        { "type": "service", "name": "vmicshutdown" },
+        { "type": "service", "name": "vmicheartbeat" },
+        { "type": "service", "name": "vmicrdv" },
+        { "type": "service", "name": "vmictimesync" },
+        { "type": "service", "name": "vmicvmsession" },
+        { "type": "feature", "name": "Microsoft-Hyper-V-All" }
+      ]
+    },
+    {
+      "id": "wsl",
+      "question": "Utilises-tu WSL (Linux sous Windows) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "feature", "name": "Microsoft-Windows-Subsystem-Linux" },
+        { "type": "feature", "name": "VirtualMachinePlatform" }
+      ]
+    },
+    {
+      "id": "rdp",
+      "question": "Autorises-tu les connexions Bureau a distance entrantes ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "TermService" },
+        { "type": "service", "name": "SessionEnv" },
+        { "type": "service", "name": "UmRdpService" }
+      ]
+    },
+    {
+      "id": "smb",
+      "question": "Partages-tu des fichiers/imprimantes en reseau (SMB) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "LanmanServer" },
+        { "type": "service", "name": "Browser" }
+      ]
+    },
+    {
+      "id": "location",
+      "question": "Utilises-tu les services de localisation (GPS) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "lfsvc" }
+      ]
+    },
+    {
+      "id": "biometrics",
+      "question": "Utilises-tu Windows Hello (biometrie) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "WbioSrvc" }
+      ]
+    },
+    {
+      "id": "touch",
+      "question": "Ton PC a-t-il un ecran tactile ou utilises-tu l'ecriture manuscrite ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "TabletInputService" },
+        { "type": "service", "name": "TextInputManagementService" }
+      ]
+    },
+    {
+      "id": "onedrive",
+      "question": "Utilises-tu OneDrive ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "appx", "name": "Microsoft.OneDriveSync" }
+      ]
+    },
+    {
+      "id": "cortana",
+      "question": "Utilises-tu Cortana / la recherche Bing dans Windows ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "appx", "name": "Microsoft.549981C3F5F10" }
+      ]
+    },
+    {
+      "id": "telemetry",
+      "question": "Desactiver la telemetrie et les diagnostics Microsoft (recommande) ?",
+      "keepIfYes": false,
+      "items": [
+        { "type": "service", "name": "DiagTrack" },
+        { "type": "service", "name": "dmwappushservice" },
+        { "type": "service", "name": "WerSvc" },
+        { "type": "service", "name": "PcaSvc" },
+        { "type": "service", "name": "WdiServiceHost" },
+        { "type": "service", "name": "WdiSystemHost" },
+        { "type": "task", "name": "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser" },
+        { "type": "task", "name": "\\Microsoft\\Windows\\Application Experience\\ProgramDataUpdater" },
+        { "type": "task", "name": "\\Microsoft\\Windows\\Application Experience\\AitAgent" },
+        { "type": "task", "name": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\Consolidator" },
+        { "type": "task", "name": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\UsbCeip" },
+        { "type": "task", "name": "\\Microsoft\\Windows\\DiskDiagnostic\\Microsoft-Windows-DiskDiagnosticDataCollector" }
+      ]
+    }
+  ],
+  "advanced": [
+    { "type": "service", "name": "RetailDemo", "description": "Mode demo magasin" },
+    { "type": "service", "name": "MapsBroker", "description": "Cartes hors ligne" },
+    { "type": "service", "name": "WMPNetworkSvc", "description": "Partage Windows Media Player" },
+    { "type": "service", "name": "PhoneSvc", "description": "Telephonie VoIP Windows" },
+    { "type": "service", "name": "SCardSvr", "description": "Carte a puce" },
+    { "type": "service", "name": "ScDeviceEnum", "description": "Enumeration cartes a puce" },
+    { "type": "service", "name": "SEMgrSvc", "description": "Paiement NFC / elements securises" },
+    { "type": "service", "name": "SharedAccess", "description": "Partage de connexion Internet" },
+    { "type": "service", "name": "WalletService", "description": "Portefeuille Windows" },
+    { "type": "appx", "name": "Microsoft.BingNews", "description": "App Actualites" },
+    { "type": "appx", "name": "Microsoft.BingWeather", "description": "App Meteo" },
+    { "type": "appx", "name": "Microsoft.YourPhone", "description": "Mobile connecte" },
+    { "type": "appx", "name": "Microsoft.MicrosoftSolitaireCollection", "description": "Solitaire" },
+    { "type": "appx", "name": "Microsoft.People", "description": "App Contacts" },
+    { "type": "appx", "name": "MicrosoftTeams", "description": "Teams personnel preinstalle" },
+    { "type": "appx", "name": "Clipchamp.Clipchamp", "description": "Editeur video" },
+    { "type": "appx", "name": "Microsoft.ZuneMusic", "description": "Groove Music" },
+    { "type": "appx", "name": "Microsoft.ZuneVideo", "description": "Films & TV" },
+    { "type": "feature", "name": "Internet-Explorer-Optional-amd64", "description": "Internet Explorer 11" },
+    { "type": "feature", "name": "WindowsMediaPlayer", "description": "Windows Media Player classique" },
+    { "type": "feature", "name": "WorkFolders-Client", "description": "Dossiers de travail entreprise" }
+  ]
 }
