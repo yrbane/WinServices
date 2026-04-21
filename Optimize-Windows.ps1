@@ -312,6 +312,76 @@ Write-Host 'Restauration en cours...' -ForegroundColor Cyan
     return $path
 }
 
+function Invoke-CategoryPhase {
+    param([Parameter(Mandatory)] $Catalog)
+    $decisions = New-Object System.Collections.Generic.List[object]
+
+    foreach ($cat in $Catalog.categories) {
+        Write-Host ''
+        Write-Ask "[$($cat.id)] $($cat.question)"
+        Write-Info "  Impact : $(($cat.items | ForEach-Object { '{0}:{1}' -f $_.type, $_.name }) -join ', ')"
+
+        $answer = Read-YesNoSkip -Prompt 'Reponse'
+        if ($answer -eq 'skip') { continue }
+
+        $disable = if ($cat.keepIfYes) { $answer -eq 'no' } else { $answer -eq 'yes' }
+        if ($disable) {
+            foreach ($it in $cat.items) { $decisions.Add($it) }
+        }
+    }
+    return ,$decisions
+}
+
+function Invoke-AdvancedPhase {
+    param([Parameter(Mandatory)] $Catalog)
+    $decisions = New-Object System.Collections.Generic.List[object]
+
+    if (-not $Catalog.advanced -or $Catalog.advanced.Count -eq 0) { return $decisions }
+
+    Write-Host ''
+    Write-Warn '--- Section avancee (item par item) ---'
+
+    foreach ($it in $Catalog.advanced) {
+        $desc = if ($it.PSObject.Properties.Name -contains 'description') { $it.description } else { '' }
+        Write-Ask "Desactiver $($it.type) '$($it.name)' ? $desc"
+        if ((Read-YesNoSkip -Prompt 'Reponse') -eq 'yes') {
+            $decisions.Add($it)
+        }
+    }
+    return ,$decisions
+}
+
+function Get-SummaryCounts {
+    param([Parameter(Mandatory)] $Decisions)
+    $result = [ordered]@{ service = 0; task = 0; feature = 0; appx = 0 }
+    foreach ($d in $Decisions) {
+        if ($result.Contains($d.type)) { $result[$d.type]++ }
+    }
+    return [pscustomobject]$result
+}
+
+function Show-Summary {
+    param(
+        [Parameter(Mandatory)] $Decisions,
+        [switch] $DryRun
+    )
+    $c = Get-SummaryCounts -Decisions $Decisions
+    Write-Host ''
+    Write-Warn '=== Recapitulatif ==='
+    Write-Host ("Services a desactiver  : {0}" -f $c.service)
+    Write-Host ("Taches a desactiver    : {0}" -f $c.task)
+    Write-Host ("Features a desactiver  : {0}" -f $c.feature)
+    Write-Host ("Paquets AppX a retirer : {0}" -f $c.appx)
+    Write-Host ("Total                  : {0}" -f $Decisions.Count)
+    if ($DryRun) { Write-Warn '(MODE DRYRUN - aucune modification ne sera appliquee)' }
+}
+
+function Read-FinalConfirmation {
+    param([switch] $DryRun)
+    if ($DryRun) { return $true }
+    return (Read-YesNoSkip -Prompt 'Appliquer les modifications ?') -eq 'yes'
+}
+
 function Test-IsElevated {
     if ($IsLinux -or $IsMacOS) { return $false }
     $id = [System.Security.Principal.WindowsIdentity]::GetCurrent()
