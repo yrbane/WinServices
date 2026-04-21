@@ -15,6 +15,18 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Compat PowerShell 5.1 : les variables automatiques $IsLinux / $IsMacOS / $IsWindows
+# n'existent qu'a partir de PowerShell 6. Sous Set-StrictMode, leur absence plante.
+if (-not (Get-Variable -Name IsWindows -Scope Global -ErrorAction SilentlyContinue)) {
+    $global:IsWindows = $true
+}
+if (-not (Get-Variable -Name IsLinux -Scope Global -ErrorAction SilentlyContinue)) {
+    $global:IsLinux = $false
+}
+if (-not (Get-Variable -Name IsMacOS -Scope Global -ErrorAction SilentlyContinue)) {
+    $global:IsMacOS = $false
+}
+
 #region Constants
 $script:MinWindowsBuild = 22621
 $script:ProtectedServices = @(
