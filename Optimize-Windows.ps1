@@ -25,6 +25,31 @@ $script:ProtectedServices = @(
 #endregion
 
 #region Functions
+function Test-IsElevated {
+    if ($IsLinux -or $IsMacOS) { return $false }
+    $id = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object System.Security.Principal.WindowsPrincipal($id)
+    return $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+function Get-CurrentWindowsBuild {
+    if ($IsLinux -or $IsMacOS) { return 0 }
+    try {
+        $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+        return [int]($os.BuildNumber)
+    } catch {
+        return 0
+    }
+}
+
+function Test-WindowsCompatible {
+    param(
+        [Parameter(Mandatory)][int] $CurrentBuild,
+        [Parameter(Mandatory)][int] $MinBuild
+    )
+    return $CurrentBuild -ge $MinBuild
+}
+
 function Read-Catalog {
     param([Parameter(Mandatory)][string] $Path)
     if (-not (Test-Path -LiteralPath $Path)) {
