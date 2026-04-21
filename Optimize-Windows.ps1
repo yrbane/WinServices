@@ -25,6 +25,31 @@ $script:ProtectedServices = @(
 #endregion
 
 #region Functions
+function Write-Info    { param([string]$Message) Write-Host $Message -ForegroundColor Gray }
+function Write-Ask     { param([string]$Message) Write-Host $Message -ForegroundColor Cyan }
+function Write-Warn    { param([string]$Message) Write-Host $Message -ForegroundColor Yellow }
+function Write-Danger  { param([string]$Message) Write-Host $Message -ForegroundColor Red }
+function Write-Success { param([string]$Message) Write-Host $Message -ForegroundColor Green }
+
+function Read-YesNoSkip {
+    param(
+        [Parameter(Mandatory)][string] $Prompt,
+        [ValidateSet('yes','no','skip')][string] $Default = 'no'
+    )
+    while ($true) {
+        $answer = (Read-Host -Prompt "$Prompt [O/N/S]").Trim().ToLowerInvariant()
+        switch ($answer) {
+            { $_ -in 'o','y','oui','yes' } { return 'yes' }
+            { $_ -in 'n','non','no' }      { return 'no' }
+            { $_ -in 's','skip' }          { return 'skip' }
+            ''                             { return $Default }
+            default {
+                Write-Warn "Reponse invalide. Tapez O, N ou S."
+            }
+        }
+    }
+}
+
 function Test-IsElevated {
     if ($IsLinux -or $IsMacOS) { return $false }
     $id = [System.Security.Principal.WindowsIdentity]::GetCurrent()
