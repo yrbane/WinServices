@@ -134,6 +134,51 @@ function New-SystemRestorePoint {
     }
 }
 
+function Add-RestoreCommand {
+    param(
+        [Parameter(Mandatory)][string] $Path,
+        [Parameter(Mandatory)][string] $Command
+    )
+    Add-Content -LiteralPath $Path -Value $Command -Encoding UTF8
+}
+
+function Disable-ServiceItem {
+    param(
+        [Parameter(Mandatory)][string] $Name,
+        [Parameter(Mandatory)][string] $RestoreScriptPath,
+        [switch] $DryRun
+    )
+    if ($Name -in $script:ProtectedServices) {
+        throw "Service protege, refus de desactivation : $Name"
+    }
+    try {
+        $svc = Get-Service -Name $Name -ErrorAction Stop
+    } catch {
+        return [pscustomobject]@{ Success = $false; Reason = "Service introuvable : $Name" }
+    }
+
+    $originalStartType = [string]$svc.StartType
+    $wasRunning = ($svc.Status -eq 'Running')
+
+    if ($DryRun) {
+        Write-Info "[DRYRUN] Desactiverait le service '$Name' (etat initial : $originalStartType / $($svc.Status))"
+        return [pscustomobject]@{ Success = $true; Reason = 'DryRun' }
+    }
+
+    try {
+        if ($wasRunning) { Stop-Service -Name $Name -Force -ErrorAction Stop }
+        Set-Service -Name $Name -StartupType Disabled -ErrorAction Stop
+    } catch {
+        return [pscustomobject]@{ Success = $false; Reason = $_.Exception.Message }
+    }
+
+    Add-RestoreCommand -Path $RestoreScriptPath -Command "Set-Service -Name '$Name' -StartupType $originalStartType"
+    if ($wasRunning) {
+        Add-RestoreCommand -Path $RestoreScriptPath -Command "Start-Service -Name '$Name'"
+    }
+    return [pscustomobject]@{ Success = $true; Reason = 'OK' }
+}
+
 function Test-IsElevated {
     if ($IsLinux -or $IsMacOS) { return $false }
     $id = [System.Security.Principal.WindowsIdentity]::GetCurrent()
