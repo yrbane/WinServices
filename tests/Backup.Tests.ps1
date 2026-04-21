@@ -40,3 +40,19 @@ Describe 'Export-StateSnapshot (services)' {
         }
     }
 }
+
+Describe 'New-SystemRestorePoint' {
+    It 'returns $true when Checkpoint-Computer succeeds' {
+        Mock -CommandName Enable-ComputerRestore -MockWith { }
+        Mock -CommandName Checkpoint-Computer -MockWith { }
+        New-SystemRestorePoint -Description 'test' | Should -BeTrue
+    }
+
+    It 'returns $false and warns when Checkpoint-Computer throws' {
+        Mock -CommandName Enable-ComputerRestore -MockWith { }
+        Mock -CommandName Checkpoint-Computer -MockWith { throw 'limit 24h' }
+        Mock -CommandName Write-Warning -MockWith { }
+        New-SystemRestorePoint -Description 'test' | Should -BeFalse
+        Should -Invoke Write-Warning -Times 1
+    }
+}

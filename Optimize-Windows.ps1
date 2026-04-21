@@ -122,6 +122,18 @@ function Export-StateSnapshot {
     return $outPath
 }
 
+function New-SystemRestorePoint {
+    param([Parameter(Mandatory)][string] $Description)
+    try {
+        Enable-ComputerRestore -Drive 'C:\' -ErrorAction Stop
+        Checkpoint-Computer -Description $Description -RestorePointType 'MODIFY_SETTINGS' -ErrorAction Stop
+        return $true
+    } catch {
+        Write-Warning "Impossible de creer un point de restauration : $($_.Exception.Message)"
+        return $false
+    }
+}
+
 function Test-IsElevated {
     if ($IsLinux -or $IsMacOS) { return $false }
     $id = [System.Security.Principal.WindowsIdentity]::GetCurrent()
