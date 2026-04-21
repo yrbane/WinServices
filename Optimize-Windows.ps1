@@ -25,7 +25,49 @@ $script:ProtectedServices = @(
 #endregion
 
 #region Functions
-# Populated in subsequent tasks
+function Read-Catalog {
+    param([Parameter(Mandatory)][string] $Path)
+    if (-not (Test-Path -LiteralPath $Path)) {
+        throw "Fichier catalogue introuvable : $Path"
+    }
+    $raw = Get-Content -LiteralPath $Path -Raw -Encoding UTF8
+    try {
+        return $raw | ConvertFrom-Json
+    } catch {
+        throw "catalog.json invalide : $($_.Exception.Message)"
+    }
+}
+
+function Test-CatalogStructure {
+    param([Parameter(Mandatory)] $Catalog)
+
+    foreach ($field in 'version','minWindowsBuild','categories','advanced') {
+        if (-not ($Catalog.PSObject.Properties.Name -contains $field)) {
+            throw "Champ manquant dans le catalogue : $field"
+        }
+    }
+
+    $validTypes = 'service','task','feature','appx'
+    $allItems = @()
+    foreach ($cat in $Catalog.categories) {
+        foreach ($f in 'id','question','keepIfYes','items') {
+            if (-not ($cat.PSObject.Properties.Name -contains $f)) {
+                throw "Champ manquant dans la categorie : $f"
+            }
+        }
+        $allItems += $cat.items
+    }
+    $allItems += $Catalog.advanced
+
+    foreach ($item in $allItems) {
+        if ($item.type -notin $validTypes) {
+            throw "type invalide pour '$($item.name)' : $($item.type)"
+        }
+        if ($item.type -eq 'service' -and $item.name -in $script:ProtectedServices) {
+            throw "Service protege dans le catalogue : $($item.name)"
+        }
+    }
+}
 #endregion
 
 #region Main
