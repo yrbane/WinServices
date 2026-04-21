@@ -77,6 +77,55 @@ Describe 'Invoke-AdvancedPhase' {
     }
 }
 
+Describe 'Invoke-Optimization end-to-end (DryRun)' {
+    It 'runs through the flow without modifications when DryRun is set' {
+        $tmpRoot = Join-Path ([System.IO.Path]::GetTempPath()) "wsopt-e2e-$(Get-Random)"
+        New-Item -ItemType Directory -Path $tmpRoot | Out-Null
+        $catalogPath = Join-Path $tmpRoot 'catalog.json'
+        $backupRoot  = Join-Path $tmpRoot 'backups'
+        @{
+            version = '1.0'
+            minWindowsBuild = 22621
+            categories = @(@{
+                id = 'printing'; question = 'Imprimante ?'; keepIfYes = $true
+                items = @(@{ type = 'service'; name = 'Spooler' })
+            })
+            advanced = @()
+        } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $catalogPath -Encoding UTF8
+
+        Mock -CommandName Test-IsElevated -MockWith { $true }
+        Mock -CommandName Get-CurrentWindowsBuild -MockWith { 22621 }
+        Mock -CommandName Read-YesNoSkip -MockWith { 'yes' }
+        Mock -CommandName Get-Service -MockWith {
+            [pscustomobject]@{ Name='Spooler'; DisplayName='Print Spooler'; Status='Running'; StartType='Automatic' }
+        }
+        Mock -CommandName Enable-ComputerRestore -MockWith { }
+        Mock -CommandName Checkpoint-Computer -MockWith { }
+
+        try {
+            $result = Invoke-Optimization -CatalogPath $catalogPath -BackupRoot $backupRoot -DryRun
+            $result.ExitCode | Should -Be 0
+            Test-Path $backupRoot | Should -BeTrue
+            Get-ChildItem -Path $backupRoot -Recurse -Filter 'services.csv' | Should -Not -BeNullOrEmpty
+        } finally {
+            Remove-Item $tmpRoot -Recurse -Force
+        }
+    }
+
+    It 'aborts early when not elevated' {
+        Mock -CommandName Test-IsElevated -MockWith { $false }
+        $r = Invoke-Optimization -CatalogPath 'x' -BackupRoot 'y' -DryRun
+        $r.ExitCode | Should -Be 1
+    }
+
+    It 'aborts early when Windows build is below the minimum' {
+        Mock -CommandName Test-IsElevated -MockWith { $true }
+        Mock -CommandName Get-CurrentWindowsBuild -MockWith { 19045 }
+        $r = Invoke-Optimization -CatalogPath 'x' -BackupRoot 'y' -DryRun
+        $r.ExitCode | Should -Be 2
+    }
+}
+
 Describe 'Get-SummaryCounts' {
     It 'counts decisions by type' {
         $decisions = @(

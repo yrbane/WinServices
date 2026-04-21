@@ -312,6 +312,87 @@ Write-Host 'Restauration en cours...' -ForegroundColor Cyan
     return $path
 }
 
+function Invoke-Optimization {
+    param(
+        [Parameter(Mandatory)][string] $CatalogPath,
+        [Parameter(Mandatory)][string] $BackupRoot,
+        [switch] $DryRun
+    )
+
+    if (-not (Test-IsElevated)) {
+        Write-Danger 'Execution administrateur requise.'
+        return [pscustomobject]@{ ExitCode = 1 }
+    }
+    $build = Get-CurrentWindowsBuild
+    if (-not (Test-WindowsCompatible -CurrentBuild $build -MinBuild $script:MinWindowsBuild)) {
+        Write-Danger "Windows build $build < $($script:MinWindowsBuild) (22H2). Abort."
+        return [pscustomobject]@{ ExitCode = 2 }
+    }
+
+    $catalog = Read-Catalog -Path $CatalogPath
+    Test-CatalogStructure -Catalog $catalog
+
+    Write-Warn 'Cet outil va desactiver des composants Windows selon tes reponses.'
+    Write-Warn 'Un point de restauration et des CSV de sauvegarde seront crees.'
+    if (-not $DryRun) {
+        if ((Read-YesNoSkip -Prompt 'Continuer ?') -ne 'yes') {
+            return [pscustomobject]@{ ExitCode = 3 }
+        }
+    }
+
+    $backupDir = New-BackupDirectory -Root $BackupRoot
+    $restoreScript = Initialize-RestoreScript -BackupDir $backupDir
+
+    $allItems = @()
+    foreach ($c in $catalog.categories) { $allItems += $c.items }
+    $allItems += $catalog.advanced
+
+    $byType = @{}
+    foreach ($t in 'service','task','feature','appx') {
+        $byType[$t] = @($allItems | Where-Object { $_.type -eq $t } | ForEach-Object { $_.name })
+    }
+
+    foreach ($t in 'service','task','feature','appx') {
+        if ($byType[$t].Count -gt 0) {
+            Export-StateSnapshot -Type $t -Names $byType[$t] -OutputDir $backupDir | Out-Null
+        }
+    }
+
+    if (-not $DryRun) {
+        New-SystemRestorePoint -Description 'Pre-Optimize-Windows' | Out-Null
+    }
+
+    $decisions = @()
+    $decisions += Invoke-CategoryPhase -Catalog $catalog
+    $decisions += Invoke-AdvancedPhase -Catalog $catalog
+
+    Show-Summary -Decisions $decisions -DryRun:$DryRun
+    if (-not (Read-FinalConfirmation -DryRun:$DryRun)) {
+        Write-Warn 'Annule par l utilisateur.'
+        return [pscustomobject]@{ ExitCode = 4 }
+    }
+
+    $successes = 0; $failures = 0
+    foreach ($item in $decisions) {
+        $r = Invoke-ItemAction -Item $item -RestoreScriptPath $restoreScript -DryRun:$DryRun
+        if ($r.Success) {
+            Write-Success "[OK] $($item.type) $($item.name) - $($r.Reason)"
+            $successes++
+        } else {
+            Write-Danger  "[KO] $($item.type) $($item.name) - $($r.Reason)"
+            $failures++
+        }
+    }
+
+    Write-Host ''
+    Write-Success ("Termine : {0} succes, {1} echecs" -f $successes, $failures)
+    Write-Info    "Sauvegardes : $backupDir"
+    Write-Info    "Script de restauration : $restoreScript"
+    if (-not $DryRun) { Write-Warn 'Redemarrage recommande pour effet complet.' }
+
+    return [pscustomobject]@{ ExitCode = 0; Successes = $successes; Failures = $failures }
+}
+
 function Invoke-CategoryPhase {
     param([Parameter(Mandatory)] $Catalog)
     $decisions = New-Object System.Collections.Generic.List[object]
@@ -454,8 +535,7 @@ function Test-CatalogStructure {
 
 #region Main
 if ($MyInvocation.InvocationName -ne '.') {
-    # Orchestration only runs when invoked directly (not dot-sourced for tests)
-    # To be implemented in Task 15
-    Write-Host 'Script skeleton - orchestration not yet implemented.' -ForegroundColor Yellow
+    $result = Invoke-Optimization -CatalogPath $CatalogPath -BackupRoot $BackupRoot -DryRun:$DryRun
+    exit $result.ExitCode
 }
 #endregion
