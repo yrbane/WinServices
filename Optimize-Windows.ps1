@@ -50,6 +50,78 @@ function Read-YesNoSkip {
     }
 }
 
+function New-BackupDirectory {
+    param([Parameter(Mandatory)][string] $Root)
+    $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+    $dir = Join-Path $Root $stamp
+    New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    return $dir
+}
+
+function Export-StateSnapshot {
+    param(
+        [Parameter(Mandatory)][ValidateSet('service','task','feature','appx')][string] $Type,
+        [Parameter(Mandatory)][string[]] $Names,
+        [Parameter(Mandatory)][string] $OutputDir
+    )
+    $fileName = switch ($Type) {
+        'service' { 'services.csv' }
+        'task'    { 'tasks.csv' }
+        'feature' { 'features.csv' }
+        'appx'    { 'appx.csv' }
+    }
+    $outPath = Join-Path $OutputDir $fileName
+
+    $rows = switch ($Type) {
+        'service' {
+            foreach ($n in $Names) {
+                try {
+                    $s = Get-Service -Name $n -ErrorAction Stop
+                    [pscustomobject]@{
+                        Name = $s.Name; DisplayName = $s.DisplayName
+                        Status = [string]$s.Status; StartType = [string]$s.StartType
+                    }
+                } catch { }
+            }
+        }
+        'task' {
+            foreach ($n in $Names) {
+                $path = Split-Path $n -Parent
+                $leaf = Split-Path $n -Leaf
+                try {
+                    $t = Get-ScheduledTask -TaskPath "$path\" -TaskName $leaf -ErrorAction Stop
+                    [pscustomobject]@{ TaskPath = $t.TaskPath; TaskName = $t.TaskName; State = [string]$t.State }
+                } catch { }
+            }
+        }
+        'feature' {
+            foreach ($n in $Names) {
+                try {
+                    $f = Get-WindowsOptionalFeature -Online -FeatureName $n -ErrorAction Stop
+                    [pscustomobject]@{ FeatureName = $f.FeatureName; State = [string]$f.State }
+                } catch { }
+            }
+        }
+        'appx' {
+            foreach ($n in $Names) {
+                try {
+                    $p = Get-AppxPackage -Name $n -ErrorAction Stop | Select-Object -First 1
+                    if ($p) {
+                        [pscustomobject]@{ Name = $p.Name; PackageFullName = $p.PackageFullName; Publisher = $p.Publisher }
+                    }
+                } catch { }
+            }
+        }
+    }
+
+    if ($rows) {
+        $rows | Export-Csv -LiteralPath $outPath -NoTypeInformation -Encoding UTF8
+    } else {
+        Set-Content -LiteralPath $outPath -Value '' -Encoding UTF8
+    }
+    return $outPath
+}
+
 function Test-IsElevated {
     if ($IsLinux -or $IsMacOS) { return $false }
     $id = [System.Security.Principal.WindowsIdentity]::GetCurrent()
