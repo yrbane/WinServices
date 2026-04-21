@@ -8,6 +8,25 @@ Script PowerShell interactif pour alléger Windows 11 (build ≥ 22621) en posan
 - PowerShell 5.1+ (inclus dans Windows 11)
 - Droits administrateur
 
+## Démarrage rapide
+
+Ouvrir **PowerShell en administrateur**, puis :
+
+```powershell
+# 1. Clone
+git clone https://github.com/yrbane/WinServices.git
+cd WinServices
+
+# 2. Si la stratégie d'exécution bloque le script, autoriser pour la session :
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+# 3. Test à blanc (aucune modification effective) — RECOMMANDÉ en premier
+.\Optimize-Windows.ps1 -DryRun
+
+# 4. Exécution réelle
+.\Optimize-Windows.ps1
+```
+
 ## Utilisation
 
 ### Mode simulation (recommandé pour découvrir)
