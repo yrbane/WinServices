@@ -35,12 +35,13 @@ Describe 'Disable-TaskItem' {
         }
     }
 
-    It 'returns failure when task not found' {
+    It 'returns success (absent) when task not found' {
         Mock -CommandName Get-ScheduledTask -MockWith { throw 'not found' }
         $tmp = [System.IO.Path]::GetTempFileName()
         try {
             $r = Disable-TaskItem -FullPath '\Missing\Task' -RestoreScriptPath $tmp -DryRun:$false
-            $r.Success | Should -BeFalse
+            $r.Success | Should -BeTrue
+            $r.Reason  | Should -Match 'absente'
         } finally {
             Remove-Item $tmp -Force
         }

@@ -165,7 +165,8 @@ function Disable-ServiceItem {
     try {
         $svc = Get-Service -Name $Name -ErrorAction Stop
     } catch {
-        return [pscustomobject]@{ Success = $false; Reason = "Service introuvable : $Name" }
+        # Service non installe : rien a faire, considere comme idempotent.
+        return [pscustomobject]@{ Success = $true; Reason = 'Service absent' }
     }
 
     $originalStartType = [string]$svc.StartType
@@ -217,7 +218,8 @@ function Disable-TaskItem {
     try {
         $task = Get-ScheduledTask -TaskPath $taskPath -TaskName $leaf -ErrorAction Stop
     } catch {
-        return [pscustomobject]@{ Success = $false; Reason = "Tache introuvable : $FullPath" }
+        # Tache non presente : idempotent.
+        return [pscustomobject]@{ Success = $true; Reason = 'Tache absente' }
     }
 
     if ($DryRun) {
@@ -244,10 +246,17 @@ function Disable-FeatureItem {
     try {
         $f = Get-WindowsOptionalFeature -Online -FeatureName $Name -ErrorAction Stop
     } catch {
-        return [pscustomobject]@{ Success = $false; Reason = "Fonctionnalite introuvable : $Name" }
+        # Feature non presente sur cette edition : idempotent.
+        return [pscustomobject]@{ Success = $true; Reason = 'Feature absente' }
+    }
+    if (-not $f) {
+        return [pscustomobject]@{ Success = $true; Reason = 'Feature absente' }
     }
 
-    if ([string]$f.State -eq 'Disabled') {
+    # StrictMode : la propriete State peut ne pas exister sur certaines editions.
+    $state = ''
+    if ($f.PSObject.Properties['State']) { $state = [string]$f.State }
+    if ($state -eq 'Disabled' -or $state -eq 'DisabledWithPayloadRemoved') {
         return [pscustomobject]@{ Success = $true; Reason = 'Deja desactivee' }
     }
 
