@@ -49,14 +49,14 @@ function Read-YesNoSkip {
         [ValidateSet('yes','no','skip')][string] $Default = 'no'
     )
     while ($true) {
-        $answer = (Read-Host -Prompt "$Prompt [O/N/S]").Trim().ToLowerInvariant()
+        $answer = (Read-Host -Prompt "$Prompt [O]ui / [N]on / [S]kip (passer)").Trim().ToLowerInvariant()
         switch ($answer) {
             { $_ -in 'o','y','oui','yes' } { return 'yes' }
             { $_ -in 'n','non','no' }      { return 'no' }
-            { $_ -in 's','skip' }          { return 'skip' }
+            { $_ -in 's','skip','passer' } { return 'skip' }
             ''                             { return $Default }
             default {
-                Write-Warn "Reponse invalide. Tapez O, N ou S."
+                Write-Warn "Reponse invalide. Tapez O (Oui), N (Non) ou S (Skip = passer cet item sans le modifier)."
             }
         }
     }
