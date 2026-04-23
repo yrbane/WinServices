@@ -49,7 +49,7 @@ Describe 'Read-Catalog' {
     It 'loads and parses the real catalog.json' {
         $path = Join-Path $PSScriptRoot '..' 'catalog.json'
         $cat = Read-Catalog -Path $path
-        $cat.version | Should -Be '1.0'
+        $cat.version | Should -Match '^\d+\.\d+$'
     }
 
     It 'throws on missing file' {

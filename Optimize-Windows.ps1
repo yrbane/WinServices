@@ -29,10 +29,25 @@ if (-not (Get-Variable -Name IsMacOS -Scope Global -ErrorAction SilentlyContinue
 
 #region Constants
 $script:MinWindowsBuild = 22621
+# Services vitaux que le script refuse absolument de desactiver, meme si le
+# catalogue les reference. Liste elargie a partir des audits reels pour couvrir :
+# authentification, cryptographie, pare-feu, UAC, plug & play, stockage, audio,
+# Defender, gestion des identifiants, broker infra, police, polices, time...
 $script:ProtectedServices = @(
-    'AudioSrv','AudioEndpointBuilder','BFE','CryptSvc','Dhcp','Dnscache',
-    'EventLog','LSM','MpsSvc','NlaSvc','Power','ProfSvc','RpcEptMapper',
-    'RpcSs','Schedule','SENS','Themes','UserManager','WinDefend','Winmgmt','wscsvc'
+    # Noyau / broker systeme
+    'BrokerInfrastructure','CoreMessagingRegistrar','DcomLaunch','EventSystem',
+    'EventLog','LSM','PlugPlay','Power','ProfSvc','RpcEptMapper','RpcSs',
+    'Schedule','SENS','StateRepository','SystemEventsBroker','Themes','UserManager','Winmgmt',
+    # Authentification / securite / pare-feu
+    'AudioSrv','AudioEndpointBuilder','BFE','CryptSvc','KeyIso','SamSs',
+    'MpsSvc','mpssvc','NlaSvc','SecurityHealthService','VaultSvc','Appinfo',
+    # Reseau IP bas-niveau
+    'Dhcp','Dnscache','nsi','LanmanWorkstation','iphlpsvc','Wcmsvc',
+    # Stockage / PnP / HID / polices / time
+    'StorSvc','FontCache','hidserv','W32Time','ShellHWDetection',
+    'camsvc','DeviceAssociationService',
+    # Defender
+    'WinDefend','WdNisSvc','MDCoreSvc','wscsvc'
 )
 #endregion
 

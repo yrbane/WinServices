@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "minWindowsBuild": 22621,
   "categories": [
     {
@@ -28,19 +28,23 @@
       "items": [
         { "type": "service", "name": "bthserv" },
         { "type": "service", "name": "BluetoothUserService" },
+        { "type": "service", "name": "BluetoothUserService_a9ddd" },
         { "type": "service", "name": "BTAGService" },
         { "type": "service", "name": "BthAvctpSvc" }
       ]
     },
     {
       "id": "xbox",
-      "question": "Utilises-tu Xbox Game Bar / Xbox Live ?",
+      "question": "Utilises-tu Xbox Game Bar / Xbox Live / jeux UWP ?",
       "keepIfYes": true,
       "items": [
         { "type": "service", "name": "XblAuthManager" },
         { "type": "service", "name": "XblGameSave" },
         { "type": "service", "name": "XboxGipSvc" },
         { "type": "service", "name": "XboxNetApiSvc" },
+        { "type": "service", "name": "GamingServices" },
+        { "type": "service", "name": "GamingServicesNet" },
+        { "type": "service", "name": "GameInputRedistService" },
         { "type": "appx",    "name": "Microsoft.XboxGamingOverlay" },
         { "type": "appx",    "name": "Microsoft.GamingApp" },
         { "type": "appx",    "name": "Microsoft.Xbox.TCUI" },
@@ -62,6 +66,8 @@
         { "type": "service", "name": "vmicrdv" },
         { "type": "service", "name": "vmictimesync" },
         { "type": "service", "name": "vmicvmsession" },
+        { "type": "service", "name": "HNS" },
+        { "type": "service", "name": "nvagent" },
         { "type": "feature", "name": "Microsoft-Hyper-V-All" }
       ]
     },
@@ -70,13 +76,14 @@
       "question": "Utilises-tu WSL (Linux sous Windows) ?",
       "keepIfYes": true,
       "items": [
+        { "type": "service", "name": "WSLService" },
         { "type": "feature", "name": "Microsoft-Windows-Subsystem-Linux" },
         { "type": "feature", "name": "VirtualMachinePlatform" }
       ]
     },
     {
       "id": "rdp",
-      "question": "Autorises-tu les connexions Bureau a distance entrantes ?",
+      "question": "Autorises-tu les connexions Bureau a distance entrantes (RDP) ?",
       "keepIfYes": true,
       "items": [
         { "type": "service", "name": "TermService" },
@@ -85,8 +92,8 @@
       ]
     },
     {
-      "id": "smb",
-      "question": "Partages-tu des fichiers/imprimantes en reseau (SMB) ?",
+      "id": "smb_server",
+      "question": "Partages-tu des fichiers/imprimantes en reseau depuis ce PC (serveur SMB) ?",
       "keepIfYes": true,
       "items": [
         { "type": "service", "name": "LanmanServer" },
@@ -94,8 +101,34 @@
       ]
     },
     {
+      "id": "hotspot",
+      "question": "Utilises-tu le partage de connexion mobile (Mobile Hotspot) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "icssvc", "description": "Point d'acces sans fil mobile" }
+      ]
+    },
+    {
+      "id": "vpn_ras",
+      "question": "Utilises-tu un VPN integre Windows ou une connexion d'acces a distance (PPP, SSTP, L2TP) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "RasMan",  "description": "Gestionnaire des connexions d'acces a distance" },
+        { "type": "service", "name": "SstpSvc", "description": "VPN SSTP" }
+      ]
+    },
+    {
+      "id": "net_discovery",
+      "question": "Utilises-tu la decouverte reseau (UPnP, chromecast, imprimantes UPnP, voisinage) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "SSDPSRV", "description": "Decouverte SSDP/UPnP" },
+        { "type": "service", "name": "lmhosts", "description": "NetBIOS over TCP/IP" }
+      ]
+    },
+    {
       "id": "location",
-      "question": "Utilises-tu les services de localisation (GPS) ?",
+      "question": "Utilises-tu les services de localisation (GPS / geoloc) ?",
       "keepIfYes": true,
       "items": [
         { "type": "service", "name": "lfsvc" }
@@ -103,15 +136,16 @@
     },
     {
       "id": "biometrics",
-      "question": "Utilises-tu Windows Hello (biometrie) ?",
+      "question": "Utilises-tu Windows Hello (biometrie : empreinte, visage) ?",
       "keepIfYes": true,
       "items": [
-        { "type": "service", "name": "WbioSrvc" }
+        { "type": "service", "name": "WbioSrvc" },
+        { "type": "service", "name": "NgcCtnrSvc", "description": "Conteneur Microsoft Passport" }
       ]
     },
     {
       "id": "touch",
-      "question": "Ton PC a-t-il un ecran tactile ou utilises-tu l'ecriture manuscrite ?",
+      "question": "Ton PC a-t-il un ecran tactile ou utilises-tu l'ecriture manuscrite / stylet ?",
       "keepIfYes": true,
       "items": [
         { "type": "service", "name": "TabletInputService" },
@@ -119,15 +153,26 @@
       ]
     },
     {
-      "id": "onedrive",
-      "question": "Utilises-tu OneDrive ?",
+      "id": "onedrive_phonelink",
+      "question": "Utilises-tu OneDrive ou le lien avec ton telephone (Phone Link, Mobile connecte) ?",
       "keepIfYes": true,
       "items": [
-        { "type": "appx", "name": "Microsoft.OneDriveSync" }
+        { "type": "service", "name": "CDPSvc",           "description": "Plateforme appareils connectes" },
+        { "type": "service", "name": "CDPUserSvc_a9ddd", "description": "Plateforme appareils connectes (user)" },
+        { "type": "appx",    "name": "Microsoft.OneDriveSync" },
+        { "type": "appx",    "name": "Microsoft.YourPhone" }
       ]
     },
     {
-      "id": "cortana",
+      "id": "search",
+      "question": "Utilises-tu la recherche Windows (indexation menu Demarrer / Explorateur) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "WSearch", "description": "Indexation Windows Search" }
+      ]
+    },
+    {
+      "id": "cortana_bing",
       "question": "Utilises-tu Cortana / la recherche Bing dans Windows ?",
       "keepIfYes": true,
       "items": [
@@ -135,9 +180,47 @@
       ]
     },
     {
+      "id": "people_sync",
+      "question": "Utilises-tu les applications Contacts / Courrier / Calendrier integrees (synchro PIM) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "PimIndexMaintenanceSvc_a9ddd", "description": "Index des contacts" },
+        { "type": "service", "name": "UnistoreSvc_a9ddd",            "description": "Magasin des donnees utilisateur" },
+        { "type": "service", "name": "UserDataSvc_a9ddd",            "description": "Acces donnees utilisateur" },
+        { "type": "service", "name": "OneSyncSvc_a9ddd",             "description": "Sync hote (Mail/Contacts)" },
+        { "type": "service", "name": "DevicesFlowUserSvc_a9ddd",     "description": "Flux d'appairage periphs" }
+      ]
+    },
+    {
+      "id": "clipboard_cloud",
+      "question": "Utilises-tu le presse-papiers cloud (Win+V, historique multi-appareils) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "cbdhsvc_a9ddd", "description": "Historique du presse-papiers" }
+      ]
+    },
+    {
+      "id": "push_notifications",
+      "question": "Veux-tu conserver les notifications push Windows (apps UWP/Store) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "WpnService",            "description": "Push Notifications (systeme)" },
+        { "type": "service", "name": "WpnUserService_a9ddd",  "description": "Push Notifications (user)" }
+      ]
+    },
+    {
+      "id": "edge_web_threat",
+      "question": "Utilises-tu la protection web Microsoft Defender SmartScreen / Edge ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "webthreatdefsvc" },
+        { "type": "service", "name": "webthreatdefusersvc_a9ddd" }
+      ]
+    },
+    {
       "id": "telemetry",
-      "question": "Desactiver la telemetrie et les diagnostics Microsoft (recommande) ?",
-      "keepIfYes": false,
+      "question": "Gardes-tu la telemetrie et les diagnostics Microsoft (recommande : N) ?",
+      "keepIfYes": true,
       "items": [
         { "type": "service", "name": "DiagTrack" },
         { "type": "service", "name": "dmwappushservice" },
@@ -145,6 +228,10 @@
         { "type": "service", "name": "PcaSvc" },
         { "type": "service", "name": "WdiServiceHost" },
         { "type": "service", "name": "WdiSystemHost" },
+        { "type": "service", "name": "InventorySvc", "description": "Appraisal inventaire/compat" },
+        { "type": "service", "name": "wuqisvc",      "description": "Qualite/usage Microsoft" },
+        { "type": "service", "name": "DusmSvc",      "description": "Consommation des donnees" },
+        { "type": "service", "name": "DoSvc",        "description": "Optimisation de livraison" },
         { "type": "task", "name": "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser" },
         { "type": "task", "name": "\\Microsoft\\Windows\\Application Experience\\ProgramDataUpdater" },
         { "type": "task", "name": "\\Microsoft\\Windows\\Application Experience\\AitAgent" },
@@ -152,29 +239,97 @@
         { "type": "task", "name": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\UsbCeip" },
         { "type": "task", "name": "\\Microsoft\\Windows\\DiskDiagnostic\\Microsoft-Windows-DiskDiagnosticDataCollector" }
       ]
+    },
+    {
+      "id": "oem_dell",
+      "question": "Veux-tu garder les utilitaires Dell (SupportAssist, TechHub, Pair) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "Dell SupportAssist Remediation" },
+        { "type": "service", "name": "DellClientManagementService" },
+        { "type": "service", "name": "DellConnectedServiceDelivery" },
+        { "type": "service", "name": "DellPairService" },
+        { "type": "service", "name": "DellTechHub" },
+        { "type": "service", "name": "SupportAssistAgent" }
+      ]
+    },
+    {
+      "id": "oem_intel_extras",
+      "question": "Veux-tu garder les utilitaires Intel annexes (Graphics Software, Innovation Platform, Dynamic Tuning, ME WMI, Wireless PROSet) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "IntelGraphicsSoftwareService" },
+        { "type": "service", "name": "ipfsvc",                 "description": "Innovation Platform Framework" },
+        { "type": "service", "name": "dptftcs",                "description": "Dynamic Tuning Telemetry" },
+        { "type": "service", "name": "WMIRegistrationService", "description": "Intel ME WMI Provider" },
+        { "type": "service", "name": "LMS",                    "description": "Intel Management and Security LMS" },
+        { "type": "service", "name": "OffloadItemService",     "description": "Intel ISH Offload" },
+        { "type": "service", "name": "PIEServiceNew",          "description": "Intel PROSet/Wireless" }
+      ]
+    },
+    {
+      "id": "oem_nvidia",
+      "question": "Utilises-tu le panneau NVIDIA (GeForce Experience / Control Panel) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "NVDisplay.ContainerLocalSystem" }
+      ]
+    },
+    {
+      "id": "oem_killer",
+      "question": "Utilises-tu la suite Killer Networking (optimisation reseau gamer) ?",
+      "keepIfYes": true,
+      "items": [
+        { "type": "service", "name": "Killer Analytics Service" },
+        { "type": "service", "name": "Killer Network Service" },
+        { "type": "service", "name": "KAPSService",          "description": "Killer Smart AP Selection" },
+        { "type": "service", "name": "KNDBWM",               "description": "Killer Dynamic Bandwidth" },
+        { "type": "service", "name": "LADMLauncherService",  "description": "LADM Launcher" }
+      ]
     }
   ],
   "advanced": [
-    { "type": "service", "name": "RetailDemo", "description": "Mode demo magasin" },
-    { "type": "service", "name": "MapsBroker", "description": "Cartes hors ligne" },
-    { "type": "service", "name": "WMPNetworkSvc", "description": "Partage Windows Media Player" },
-    { "type": "service", "name": "PhoneSvc", "description": "Telephonie VoIP Windows" },
-    { "type": "service", "name": "SCardSvr", "description": "Carte a puce" },
-    { "type": "service", "name": "ScDeviceEnum", "description": "Enumeration cartes a puce" },
-    { "type": "service", "name": "SEMgrSvc", "description": "Paiement NFC / elements securises" },
-    { "type": "service", "name": "SharedAccess", "description": "Partage de connexion Internet" },
-    { "type": "service", "name": "WalletService", "description": "Portefeuille Windows" },
-    { "type": "appx", "name": "Microsoft.BingNews", "description": "App Actualites" },
-    { "type": "appx", "name": "Microsoft.BingWeather", "description": "App Meteo" },
-    { "type": "appx", "name": "Microsoft.YourPhone", "description": "Mobile connecte" },
-    { "type": "appx", "name": "Microsoft.MicrosoftSolitaireCollection", "description": "Solitaire" },
-    { "type": "appx", "name": "Microsoft.People", "description": "App Contacts" },
-    { "type": "appx", "name": "MicrosoftTeams", "description": "Teams personnel preinstalle" },
-    { "type": "appx", "name": "Clipchamp.Clipchamp", "description": "Editeur video" },
-    { "type": "appx", "name": "Microsoft.ZuneMusic", "description": "Groove Music" },
-    { "type": "appx", "name": "Microsoft.ZuneVideo", "description": "Films & TV" },
-    { "type": "feature", "name": "Internet-Explorer-Optional-amd64", "description": "Internet Explorer 11" },
-    { "type": "feature", "name": "WindowsMediaPlayer", "description": "Windows Media Player classique" },
-    { "type": "feature", "name": "WorkFolders-Client", "description": "Dossiers de travail entreprise" }
+    { "type": "service", "name": "RetailDemo",                "description": "Mode demo magasin" },
+    { "type": "service", "name": "MapsBroker",                "description": "Cartes hors ligne" },
+    { "type": "service", "name": "WMPNetworkSvc",             "description": "Partage Windows Media Player" },
+    { "type": "service", "name": "PhoneSvc",                  "description": "Telephonie VoIP Windows" },
+    { "type": "service", "name": "SCardSvr",                  "description": "Carte a puce" },
+    { "type": "service", "name": "ScDeviceEnum",              "description": "Enumeration cartes a puce" },
+    { "type": "service", "name": "SEMgrSvc",                  "description": "Paiement NFC / elements securises" },
+    { "type": "service", "name": "SharedAccess",              "description": "Partage de connexion Internet (ICS)" },
+    { "type": "service", "name": "WalletService",             "description": "Portefeuille Windows" },
+    { "type": "service", "name": "SysMain",                   "description": "Superfetch (prechargement memoire)" },
+    { "type": "service", "name": "WinHttpAutoProxySvc",       "description": "Decouverte auto de Proxy Web" },
+    { "type": "service", "name": "TokenBroker",               "description": "Gestionnaire comptes web (Store login)" },
+    { "type": "service", "name": "LicenseManager",            "description": "Gestionnaire de licences Store" },
+    { "type": "service", "name": "ClipSVC",                   "description": "Service de licences Store" },
+    { "type": "service", "name": "InstallService",            "description": "Installation Microsoft Store" },
+    { "type": "service", "name": "UsoSvc",                    "description": "Update Orchestrator (pilote WU)" },
+    { "type": "service", "name": "whesvc",                    "description": "Integrite et experiences optimisees" },
+    { "type": "service", "name": "WSAIFabricSvc",             "description": "WSA IFabric (Sous-systeme Android)" },
+    { "type": "service", "name": "DispBrokerDesktopSvc",      "description": "Broker de strategie d'affichage" },
+    { "type": "service", "name": "DisplayEnhancementService", "description": "Amelioration de l'affichage" },
+    { "type": "service", "name": "smphost",                   "description": "Espaces de stockages Microsoft" },
+    { "type": "service", "name": "DevQueryBroker",            "description": "Decouverte de peripheriques" },
+    { "type": "service", "name": "DeviceInstall",             "description": "Installation de peripheriques" },
+    { "type": "appx", "name": "Microsoft.BingNews",                      "description": "App Actualites" },
+    { "type": "appx", "name": "Microsoft.BingWeather",                   "description": "App Meteo" },
+    { "type": "appx", "name": "Microsoft.MicrosoftSolitaireCollection",  "description": "Solitaire" },
+    { "type": "appx", "name": "Microsoft.People",                        "description": "App Contacts" },
+    { "type": "appx", "name": "MicrosoftTeams",                          "description": "Teams personnel preinstalle" },
+    { "type": "appx", "name": "Clipchamp.Clipchamp",                     "description": "Editeur video" },
+    { "type": "appx", "name": "Microsoft.ZuneMusic",                     "description": "Groove Music" },
+    { "type": "appx", "name": "Microsoft.ZuneVideo",                     "description": "Films & TV" },
+    { "type": "appx", "name": "Microsoft.WindowsFeedbackHub",            "description": "Hub de commentaires" },
+    { "type": "appx", "name": "Microsoft.GetHelp",                       "description": "Obtenir de l'aide" },
+    { "type": "appx", "name": "Microsoft.Getstarted",                    "description": "Prise en main Windows" },
+    { "type": "appx", "name": "Microsoft.MicrosoftOfficeHub",            "description": "Office (lanceur preinstalle)" },
+    { "type": "appx", "name": "Microsoft.Office.OneNote",                "description": "OneNote Store" },
+    { "type": "appx", "name": "Microsoft.MixedReality.Portal",           "description": "Casque Mixed Reality" },
+    { "type": "appx", "name": "Microsoft.SkypeApp",                      "description": "Skype preinstalle" },
+    { "type": "feature", "name": "Internet-Explorer-Optional-amd64",     "description": "Internet Explorer 11" },
+    { "type": "feature", "name": "WindowsMediaPlayer",                   "description": "Windows Media Player classique" },
+    { "type": "feature", "name": "WorkFolders-Client",                   "description": "Dossiers de travail entreprise" },
+    { "type": "feature", "name": "Printing-XPSServices-Features",        "description": "Services XPS (impression)" }
   ]
 }
