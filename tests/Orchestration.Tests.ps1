@@ -141,3 +141,87 @@ Describe 'Get-SummaryCounts' {
         $summary.appx    | Should -Be 1
     }
 }
+
+Describe 'Select-ExistingItems' {
+    It 'keeps only items that exist on the machine and drops empty categories' {
+        Mock -CommandName Test-ItemExists -MockWith {
+            param($Item) return ($Item.name -in @('Spooler','Fax','Keep'))
+        }
+        $catalog = [pscustomobject]@{
+            version = '1.1'
+            minWindowsBuild = 22621
+            categories = @(
+                [pscustomobject]@{ id='printing'; question='?'; keepIfYes=$true; items=@(
+                    [pscustomobject]@{ type='service'; name='Spooler' },
+                    [pscustomobject]@{ type='service'; name='Ghost'   }   # absent
+                )},
+                [pscustomobject]@{ id='oem_dell'; question='?'; keepIfYes=$true; items=@(
+                    [pscustomobject]@{ type='service'; name='DellTechHub' },   # absent
+                    [pscustomobject]@{ type='service'; name='DellPairService' } # absent
+                )}
+            )
+            advanced = @(
+                [pscustomobject]@{ type='service'; name='Keep' },
+                [pscustomobject]@{ type='service'; name='Gone' }
+            )
+        }
+        $r = Select-ExistingItems -Catalog $catalog
+        $r.Catalog.categories.Count | Should -Be 1
+        $r.Catalog.categories[0].id | Should -Be 'printing'
+        $r.Catalog.categories[0].items.Count | Should -Be 1
+        $r.Catalog.advanced.Count | Should -Be 1
+        # 1 (Ghost) + 2 (Dell) + 1 (Gone advanced) = 4 items absents
+        $r.SkippedItems      | Should -Be 4
+        $r.SkippedCategories | Should -Be 1
+    }
+
+    It 'returns catalog unchanged when every item exists' {
+        Mock -CommandName Test-ItemExists -MockWith { $true }
+        $catalog = [pscustomobject]@{
+            version = '1.1'
+            categories = @(
+                [pscustomobject]@{ id='x'; question='?'; keepIfYes=$true; items=@(
+                    [pscustomobject]@{ type='service'; name='A' }
+                )}
+            )
+            advanced = @()
+        }
+        $r = Select-ExistingItems -Catalog $catalog
+        $r.SkippedItems      | Should -Be 0
+        $r.SkippedCategories | Should -Be 0
+        $r.Catalog.categories.Count | Should -Be 1
+    }
+}
+
+Describe 'Test-ItemExists' {
+    It 'returns $true without probing on non-Windows platforms' {
+        Mock -CommandName Test-IsWindowsPlatform -MockWith { $false }
+        Mock -CommandName Get-Service -MockWith { throw 'should not be called' }
+        Test-ItemExists -Item ([pscustomobject]@{ type='service'; name='Whatever' }) | Should -BeTrue
+        Should -Invoke Get-Service -Times 0
+    }
+
+    It 'returns $true when Get-Service finds the service' {
+        Mock -CommandName Test-IsWindowsPlatform -MockWith { $true }
+        Mock -CommandName Get-Service -MockWith { [pscustomobject]@{ Name='Spooler' } }
+        Test-ItemExists -Item ([pscustomobject]@{ type='service'; name='Spooler' }) | Should -BeTrue
+    }
+
+    It 'returns $false when Get-Service returns nothing' {
+        Mock -CommandName Test-IsWindowsPlatform -MockWith { $true }
+        Mock -CommandName Get-Service -MockWith { $null }
+        Test-ItemExists -Item ([pscustomobject]@{ type='service'; name='Ghost' }) | Should -BeFalse
+    }
+
+    It 'returns $false when AppX package is not installed' {
+        Mock -CommandName Test-IsWindowsPlatform -MockWith { $true }
+        Mock -CommandName Get-AppxPackage -MockWith { $null }
+        Test-ItemExists -Item ([pscustomobject]@{ type='appx'; name='Nope' }) | Should -BeFalse
+    }
+
+    It 'returns $false when optional feature is absent' {
+        Mock -CommandName Test-IsWindowsPlatform -MockWith { $true }
+        Mock -CommandName Get-WindowsOptionalFeature -MockWith { $null }
+        Test-ItemExists -Item ([pscustomobject]@{ type='feature'; name='Missing' }) | Should -BeFalse
+    }
+}

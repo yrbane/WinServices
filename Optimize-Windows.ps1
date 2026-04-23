@@ -368,6 +368,15 @@ function Invoke-Optimization {
     $catalog = Read-Catalog -Path $CatalogPath
     Test-CatalogStructure -Catalog $catalog
 
+    # Filtre adaptatif : sur une machine qui n'a ni Dell, ni Killer, ni Xbox...
+    # les items absents et les categories vides disparaissent silencieusement.
+    $filtered = Select-ExistingItems -Catalog $catalog
+    $catalog  = $filtered.Catalog
+    if ($filtered.SkippedItems -gt 0 -or $filtered.SkippedCategories -gt 0) {
+        Write-Info ("Filtrage machine : {0} item(s) absent(s), {1} categorie(s) sans objet, ignores." -f `
+            $filtered.SkippedItems, $filtered.SkippedCategories)
+    }
+
     Write-Warn 'Cet outil va desactiver des composants Windows selon tes reponses.'
     Write-Warn 'Un point de restauration et des CSV de sauvegarde seront crees.'
     if (-not $DryRun) {
@@ -427,6 +436,88 @@ function Invoke-Optimization {
     if (-not $DryRun) { Write-Warn 'Redemarrage recommande pour effet complet.' }
 
     return [pscustomobject]@{ ExitCode = 0; Successes = $successes; Failures = $failures }
+}
+
+function Test-IsWindowsPlatform {
+    # Extraite en fonction dedie pour pouvoir la mocker dans les tests :
+    # sur PS 7 Linux/macOS, les variables $IsLinux/$IsMacOS sont read-only.
+    return -not ($IsLinux -or $IsMacOS)
+}
+
+function Test-ItemExists {
+    # Verifie qu'un item du catalogue est reellement present sur la machine.
+    # Sous Linux/macOS (dev/tests), on laisse passer tout le monde pour ne pas
+    # filtrer par erreur a cause des stubs. Sous Windows, on interroge le systeme.
+    param([Parameter(Mandatory)] $Item)
+    if (-not (Test-IsWindowsPlatform)) { return $true }
+    try {
+        switch ($Item.type) {
+            'service' {
+                return [bool](Get-Service -Name $Item.name -ErrorAction SilentlyContinue)
+            }
+            'task' {
+                $parts = Split-TaskPath -FullPath $Item.name
+                return [bool](Get-ScheduledTask -TaskPath $parts.TaskPath -TaskName $parts.TaskName -ErrorAction SilentlyContinue)
+            }
+            'feature' {
+                return [bool](Get-WindowsOptionalFeature -Online -FeatureName $Item.name -ErrorAction SilentlyContinue)
+            }
+            'appx' {
+                return [bool](Get-AppxPackage -Name $Item.name -ErrorAction SilentlyContinue)
+            }
+            default { return $true }
+        }
+    } catch {
+        # En cas de doute, on garde l'item : l'idempotence du handler gerera l'absence.
+        return $true
+    }
+}
+
+function Select-ExistingItems {
+    # Filtre le catalogue : ne garde que les items presents sur la machine.
+    # Les categories qui se retrouvent vides apres filtrage sont ecartees (skip silencieux).
+    # Retourne un nouvel objet catalog (ne modifie pas l'original) + un compteur.
+    param([Parameter(Mandatory)] $Catalog)
+
+    $filteredCategories = New-Object System.Collections.Generic.List[object]
+    $skippedItems = 0
+    $skippedCategories = 0
+
+    foreach ($cat in $Catalog.categories) {
+        $existing = @($cat.items | Where-Object { Test-ItemExists -Item $_ })
+        $skippedItems += ($cat.items.Count - $existing.Count)
+        if ($existing.Count -eq 0) {
+            $skippedCategories++
+            continue
+        }
+        $filteredCategories.Add([pscustomobject]@{
+            id        = $cat.id
+            question  = $cat.question
+            keepIfYes = $cat.keepIfYes
+            items     = $existing
+        })
+    }
+
+    $filteredAdvanced = @()
+    if ($Catalog.advanced) {
+        $filteredAdvanced = @($Catalog.advanced | Where-Object { Test-ItemExists -Item $_ })
+        $skippedItems += ($Catalog.advanced.Count - $filteredAdvanced.Count)
+    }
+
+    # StrictMode : ne toucher qu'aux proprietes reellement presentes.
+    $version = if ($Catalog.PSObject.Properties['version']) { $Catalog.version } else { $null }
+    $minBuild = if ($Catalog.PSObject.Properties['minWindowsBuild']) { $Catalog.minWindowsBuild } else { $null }
+    $newCatalog = [pscustomobject]@{
+        version         = $version
+        minWindowsBuild = $minBuild
+        categories      = $filteredCategories.ToArray()
+        advanced        = $filteredAdvanced
+    }
+    return [pscustomobject]@{
+        Catalog           = $newCatalog
+        SkippedItems      = $skippedItems
+        SkippedCategories = $skippedCategories
+    }
 }
 
 function Invoke-CategoryPhase {
