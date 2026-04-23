@@ -1,0 +1,163 @@
+PS C:\WinServices> .\Optimize-Windows.ps1 -DryRun
+Cet outil va desactiver des composants Windows selon tes reponses.
+Un point de restauration et des CSV de sauvegarde seront crees.
+
+[printing] Utilises-tu une imprimante (locale ou reseau) ?
+  Impact : service:Spooler, service:PrintNotify, service:PrintWorkflowUserSvc, task:\Microsoft\Windows\Printing\EduPrintProv
+Reponse [O/N/S]: N
+
+[fax] Utilises-tu le fax ?
+  Impact : service:Fax
+Reponse [O/N/S]: N
+
+[bluetooth] Utilises-tu le Bluetooth ?
+  Impact : service:bthserv, service:BluetoothUserService, service:BTAGService, service:BthAvctpSvc
+Reponse [O/N/S]: O
+
+[xbox] Utilises-tu Xbox Game Bar / Xbox Live ?
+  Impact : service:XblAuthManager, service:XblGameSave, service:XboxGipSvc, service:XboxNetApiSvc, appx:Microsoft.XboxGamingOverlay, appx:Microsoft.GamingApp, appx:Microsoft.Xbox.TCUI, appx:Microsoft.XboxSpeechToTextOverlay
+Reponse [O/N/S]: N
+
+[hyperv] Utilises-tu Hyper-V / machines virtuelles Windows ?
+  Impact : service:vmcompute, service:vmms, service:HvHost, service:vmickvpexchange, service:vmicguestinterface, service:vmicshutdown, service:vmicheartbeat, service:vmicrdv, service:vmictimesync, service:vmicvmsession, feature:Microsoft-Hyper-V-All
+Reponse [O/N/S]: N
+
+[wsl] Utilises-tu WSL (Linux sous Windows) ?
+  Impact : feature:Microsoft-Windows-Subsystem-Linux, feature:VirtualMachinePlatform
+Reponse [O/N/S]: O
+
+[rdp] Autorises-tu les connexions Bureau a distance entrantes ?
+  Impact : service:TermService, service:SessionEnv, service:UmRdpService
+Reponse [O/N/S]: N
+
+[smb] Partages-tu des fichiers/imprimantes en reseau (SMB) ?
+  Impact : service:LanmanServer, service:Browser
+Reponse [O/N/S]: O
+
+[location] Utilises-tu les services de localisation (GPS) ?
+  Impact : service:lfsvc
+Reponse [O/N/S]: N
+
+[biometrics] Utilises-tu Windows Hello (biometrie) ?
+  Impact : service:WbioSrvc
+Reponse [O/N/S]: N
+
+[touch] Ton PC a-t-il un ecran tactile ou utilises-tu l'ecriture manuscrite ?
+  Impact : service:TabletInputService, service:TextInputManagementService
+Reponse [O/N/S]: N
+
+[onedrive] Utilises-tu OneDrive ?
+  Impact : appx:Microsoft.OneDriveSync
+Reponse [O/N/S]: N
+
+[cortana] Utilises-tu Cortana / la recherche Bing dans Windows ?
+  Impact : appx:Microsoft.549981C3F5F10
+Reponse [O/N/S]: N
+
+[telemetry] Desactiver la telemetrie et les diagnostics Microsoft (recommande) ?
+  Impact : service:DiagTrack, service:dmwappushservice, service:WerSvc, service:PcaSvc, service:WdiServiceHost, service:WdiSystemHost, task:\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser, task:\Microsoft\Windows\Application Experience\ProgramDataUpdater, task:\Microsoft\Windows\Application Experience\AitAgent, task:\Microsoft\Windows\Customer Experience Improvement Program\Consolidator, task:\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip, task:\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector
+Reponse [O/N/S]: O
+
+--- Section avancee (item par item) ---
+Desactiver service 'RetailDemo' ? Mode demo magasin
+Reponse [O/N/S]: O
+Desactiver service 'MapsBroker' ? Cartes hors ligne
+Reponse [O/N/S]: O
+Desactiver service 'WMPNetworkSvc' ? Partage Windows Media Player
+Reponse [O/N/S]: O
+Desactiver service 'PhoneSvc' ? Telephonie VoIP Windows
+Reponse [O/N/S]: O
+Desactiver service 'SCardSvr' ? Carte a puce
+Reponse [O/N/S]: O
+Desactiver service 'ScDeviceEnum' ? Enumeration cartes a puce
+Reponse [O/N/S]: O
+Desactiver service 'SEMgrSvc' ? Paiement NFC / elements securises
+Reponse [O/N/S]: O
+Desactiver service 'SharedAccess' ? Partage de connexion Internet
+Reponse [O/N/S]: O
+Desactiver service 'WalletService' ? Portefeuille Windows
+Reponse [O/N/S]: O
+Desactiver appx 'Microsoft.BingNews' ? App Actualites
+Reponse [O/N/S]: O
+Desactiver appx 'Microsoft.BingWeather' ? App Meteo
+Reponse [O/N/S]: O
+Desactiver appx 'Microsoft.YourPhone' ? Mobile connecte
+Reponse [O/N/S]: O
+Desactiver appx 'Microsoft.MicrosoftSolitaireCollection' ? Solitaire
+Reponse [O/N/S]: O
+Desactiver appx 'Microsoft.People' ? App Contacts
+Reponse [O/N/S]: O
+Desactiver appx 'MicrosoftTeams' ? Teams personnel preinstalle
+Reponse [O/N/S]: N
+Desactiver appx 'Clipchamp.Clipchamp' ? Editeur video
+Reponse [O/N/S]: O
+Desactiver appx 'Microsoft.ZuneMusic' ? Groove Music
+Reponse [O/N/S]: O
+Desactiver appx 'Microsoft.ZuneVideo' ? Films & TV
+Reponse [O/N/S]: O
+Desactiver feature 'Internet-Explorer-Optional-amd64' ? Internet Explorer 11
+Reponse [O/N/S]: O
+Desactiver feature 'WindowsMediaPlayer' ? Windows Media Player classique
+Reponse [O/N/S]: O
+Desactiver feature 'WorkFolders-Client' ? Dossiers de travail entreprise
+Reponse [O/N/S]: O
+
+=== Recapitulatif ===
+Services a desactiver  : 40
+Taches a desactiver    : 7
+Features a desactiver  : 4
+Paquets AppX a retirer : 14
+Total                  : 65
+(MODE DRYRUN - aucune modification ne sera appliquee)
+[DRYRUN] Desactiverait le service 'Spooler' (etat initial : Automatic / Running)
+[OK] service Spooler - DryRun
+[DRYRUN] Desactiverait le service 'PrintNotify' (etat initial : Manual / Stopped)
+[OK] service PrintNotify - DryRun
+[DRYRUN] Desactiverait le service 'PrintWorkflowUserSvc' (etat initial : Manual / Stopped)
+[OK] service PrintWorkflowUserSvc - DryRun
+[DRYRUN] Desactiverait la tache '\Microsoft\Windows\Printing\EduPrintProv' (etat initial : Ready)
+[OK] task \Microsoft\Windows\Printing\EduPrintProv - DryRun
+[KO] service Fax - Service introuvable : Fax
+[DRYRUN] Desactiverait le service 'XblAuthManager' (etat initial : Manual / Running)
+[OK] service XblAuthManager - DryRun
+[DRYRUN] Desactiverait le service 'XblGameSave' (etat initial : Manual / Stopped)
+[OK] service XblGameSave - DryRun
+[DRYRUN] Desactiverait le service 'XboxGipSvc' (etat initial : Manual / Stopped)
+[OK] service XboxGipSvc - DryRun
+[DRYRUN] Desactiverait le service 'XboxNetApiSvc' (etat initial : Manual / Stopped)
+[OK] service XboxNetApiSvc - DryRun
+[DRYRUN] Desinstallerait le paquet AppX 'Microsoft.XboxGamingOverlay'
+[OK] appx Microsoft.XboxGamingOverlay - DryRun
+[DRYRUN] Desinstallerait le paquet AppX 'Microsoft.GamingApp'
+[OK] appx Microsoft.GamingApp - DryRun
+[DRYRUN] Desinstallerait le paquet AppX 'Microsoft.Xbox.TCUI'
+[OK] appx Microsoft.Xbox.TCUI - DryRun
+[DRYRUN] Desinstallerait le paquet AppX 'Microsoft.XboxSpeechToTextOverlay'
+[OK] appx Microsoft.XboxSpeechToTextOverlay - DryRun
+[DRYRUN] Desactiverait le service 'vmcompute' (etat initial : Manual / Stopped)
+[OK] service vmcompute - DryRun
+[KO] service vmms - Service introuvable : vmms
+[DRYRUN] Desactiverait le service 'HvHost' (etat initial : Manual / Running)
+[OK] service HvHost - DryRun
+[DRYRUN] Desactiverait le service 'vmickvpexchange' (etat initial : Manual / Stopped)
+[OK] service vmickvpexchange - DryRun
+[DRYRUN] Desactiverait le service 'vmicguestinterface' (etat initial : Manual / Stopped)
+[OK] service vmicguestinterface - DryRun
+[DRYRUN] Desactiverait le service 'vmicshutdown' (etat initial : Manual / Stopped)
+[OK] service vmicshutdown - DryRun
+[DRYRUN] Desactiverait le service 'vmicheartbeat' (etat initial : Manual / Stopped)
+[OK] service vmicheartbeat - DryRun
+[DRYRUN] Desactiverait le service 'vmicrdv' (etat initial : Manual / Stopped)
+[OK] service vmicrdv - DryRun
+[DRYRUN] Desactiverait le service 'vmictimesync' (etat initial : Manual / Stopped)
+[OK] service vmictimesync - DryRun
+[DRYRUN] Desactiverait le service 'vmicvmsession' (etat initial : Manual / Stopped)
+[OK] service vmicvmsession - DryRun
+Disable-FeatureItem : La propriété « State » est introuvable dans cet objet. Vérifiez qu’elle existe.
+Au caractère C:\WinServices\Optimize-Windows.ps1:305 : 28
++ ... e' { return Disable-FeatureItem -Name $Item.name -RestoreScriptPath $ ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Disable-FeatureItem], PropertyNotFoundException
+    + FullyQualifiedErrorId : PropertyNotFoundStrict,Disable-FeatureItem
+
+PS C:\WinServices>
